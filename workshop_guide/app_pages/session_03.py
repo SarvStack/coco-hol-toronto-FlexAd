@@ -61,7 +61,7 @@ PROMPT_3_3 = """In ADTECH_AI.OPS, implement a RAG pattern:
 
 1. Question: "What are the most common causes of campaign underperformance and what optimization strategies have been effective?"
 
-2. Retrieve top 5 documents from ADTECH_SEARCH, then pass to SNOWFLAKE.CORTEX.COMPLETE() with instructions to answer ONLY from the provided documents, cite doc_ids, and structure the answer with: 1) Common performance issues, 2) Root causes, 3) Effective optimization strategies, 4) Recommendations.
+2. Retrieve top 5 documents from ADTECH_SEARCH, then pass to SNOWFLAKE.CORTEX.AI_COMPLETE() with instructions to answer ONLY from the provided documents, cite doc_ids, and structure the answer with: 1) Common performance issues, 2) Root causes, 3) Effective optimization strategies, 4) Recommendations.
 
 Use claude-sonnet-4-6 as the model. Execute and show the RAG response."""
 
