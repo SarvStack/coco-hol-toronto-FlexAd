@@ -10,25 +10,22 @@ render_technologies_used([
 ])
 
 
-PROMPT_3_1 = """In ADTECH_AI.OPS:
+PROMPT_3_1 = """In ADTECH_AI.OPS, using warehouse ADTECH_WH, execute everything:
 
-1. First, create a unified text table for search called ADTECH_KNOWLEDGE_BASE that combines:
-   - OPTIMIZATION_REPORTS: use report_id as doc_id, 'optimization_report' as doc_type, content as content, report_type as metadata_category, priority as metadata_priority, report_date as doc_date
-   - COMPLIANCE_DOCS: use doc_id as doc_id, 'compliance_doc' as doc_type, title || ': ' || content as content, category as metadata_category, 'High' as metadata_priority, effective_date as doc_date
+1. Create a table called ADTECH_KNOWLEDGE_BASE that combines the rows of two tables, with change tracking enabled so a search service can refresh from it.
+   - From OPTIMIZATION_REPORTS: REPORT_ID becomes DOC_ID, DOC_TYPE is 'optimization_report', CONTENT stays CONTENT, REPORT_TYPE becomes METADATA_CATEGORY, PRIORITY becomes METADATA_PRIORITY, REPORT_DATE becomes DOC_DATE, and keep CAMPAIGN_ID.
+   - From COMPLIANCE_DOCS: DOC_ID stays DOC_ID, DOC_TYPE is 'compliance_doc', CONTENT is the title and content joined as "title: content", CATEGORY becomes METADATA_CATEGORY, METADATA_PRIORITY is 'High', EFFECTIVE_DATE becomes DOC_DATE, and CAMPAIGN_ID is empty.
+   Skip rows with no content. Show the row count by document type (expect 60 reports and 30 compliance docs).
 
-2. Then create a Cortex Search Service:
-   CREATE OR REPLACE CORTEX SEARCH SERVICE ADTECH_SEARCH
-     ON content
-     ATTRIBUTES metadata_category, metadata_priority, doc_type
-     WAREHOUSE = ADTECH_WH
-     TARGET_LAG = '1 hour'
-     EMBEDDING_MODEL = 'snowflake-arctic-embed-l-v2.0'
-     AS (
-       SELECT doc_id, doc_type, content, metadata_category, metadata_priority, doc_date
-       FROM ADTECH_KNOWLEDGE_BASE
-     );
+2. Create a Cortex Search service called ADTECH_SEARCH on that table:
+   - Search on the CONTENT column.
+   - Allow filtering by DOC_TYPE, METADATA_CATEGORY, METADATA_PRIORITY, DOC_DATE and CAMPAIGN_ID.
+   - Return DOC_ID with each result. Use DOC_ID as the primary key only if it is unique across both sources; otherwise leave the primary key out.
+   - Use warehouse ADTECH_WH, refresh at least every hour, and use the snowflake-arctic-embed-l-v2.0 embedding model.
 
-Execute all SQL. Then verify with SHOW CORTEX SEARCH SERVICES."""
+3. Verify:
+   - Confirm the service exists and report its status.
+   - Run one test search for "how to improve CTR on video campaigns", limited to optimization reports, returning the top 3 results with their doc ID, category and content."""
 
 render_prompt("Prompt 3.1", "Create Cortex Search Service", PROMPT_3_1)
 
