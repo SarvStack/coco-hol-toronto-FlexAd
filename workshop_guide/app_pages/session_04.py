@@ -49,43 +49,13 @@ Tests the agent with structured, unstructured, and mixed queries to validate too
 
 PROMPT_4_3 = """In ADTECH_AI.OPS, add a custom tool to the agent:
 
-1. Create a UDF:
+1. Create a SQL UDF called CALCULATE_CAMPAIGN_HEALTH_SCORE that takes four FLOAT inputs (CTR, CVR, ROAS, budget pacing rate) and returns a VARIANT with:
+   - health_score (0-100): weighted sum of CTR score (25pts, target 2%), CVR score (25pts, target 5%), ROAS score (30pts, target 3x), pacing score (20pts if 85-115%, 10pts if 70-130%, else 0)
+   - rating: Excellent (>=80), Good (>=60), Needs Attention (>=40), Critical (<40)
+   - breakdown: individual component scores
+   Add a COMMENT explaining what the function does and the benchmarks.
 
-CREATE OR REPLACE FUNCTION CALCULATE_CAMPAIGN_HEALTH_SCORE(
-    p_ctr FLOAT, p_cvr FLOAT, p_roas FLOAT, p_budget_pace FLOAT
-)
-RETURNS VARIANT
-LANGUAGE SQL
-AS
-$$
-    SELECT OBJECT_CONSTRUCT(
-        'health_score', ROUND(
-            (LEAST(p_ctr / 0.02, 1.0) * 25) +
-            (LEAST(p_cvr / 0.05, 1.0) * 25) +
-            (LEAST(p_roas / 3.0, 1.0) * 30) +
-            (CASE WHEN p_budget_pace BETWEEN 0.85 AND 1.15 THEN 20
-                  WHEN p_budget_pace BETWEEN 0.70 AND 1.30 THEN 10
-                  ELSE 0 END)
-        , 1),
-        'rating', CASE
-            WHEN (LEAST(p_ctr/0.02,1)*25 + LEAST(p_cvr/0.05,1)*25 + LEAST(p_roas/3.0,1)*30 + CASE WHEN p_budget_pace BETWEEN 0.85 AND 1.15 THEN 20 WHEN p_budget_pace BETWEEN 0.70 AND 1.30 THEN 10 ELSE 0 END) >= 80 THEN 'Excellent'
-            WHEN (LEAST(p_ctr/0.02,1)*25 + LEAST(p_cvr/0.05,1)*25 + LEAST(p_roas/3.0,1)*30 + CASE WHEN p_budget_pace BETWEEN 0.85 AND 1.15 THEN 20 WHEN p_budget_pace BETWEEN 0.70 AND 1.30 THEN 10 ELSE 0 END) >= 60 THEN 'Good'
-            WHEN (LEAST(p_ctr/0.02,1)*25 + LEAST(p_cvr/0.05,1)*25 + LEAST(p_roas/3.0,1)*30 + CASE WHEN p_budget_pace BETWEEN 0.85 AND 1.15 THEN 20 WHEN p_budget_pace BETWEEN 0.70 AND 1.30 THEN 10 ELSE 0 END) >= 40 THEN 'Needs Attention'
-            ELSE 'Critical'
-        END,
-        'breakdown', OBJECT_CONSTRUCT(
-            'ctr_score', ROUND(LEAST(p_ctr / 0.02, 1.0) * 25, 1),
-            'cvr_score', ROUND(LEAST(p_cvr / 0.05, 1.0) * 25, 1),
-            'roas_score', ROUND(LEAST(p_roas / 3.0, 1.0) * 30, 1),
-            'pacing_score', CASE WHEN p_budget_pace BETWEEN 0.85 AND 1.15 THEN 20 WHEN p_budget_pace BETWEEN 0.70 AND 1.30 THEN 10 ELSE 0 END
-        )
-    )
-$$;
-
-COMMENT ON FUNCTION CALCULATE_CAMPAIGN_HEALTH_SCORE(FLOAT, FLOAT, FLOAT, FLOAT)
-IS 'Calculates a campaign health score (0-100) from CTR, CVR, ROAS, and budget pacing. Returns score, rating (Excellent/Good/Needs Attention/Critical), and component breakdown. Benchmarks: CTR target 2%, CVR target 5%, ROAS target 3x, pacing target 85-115%.';
-
-2. Recreate ADTECH_AGENT with CALCULATE_CAMPAIGN_HEALTH_SCORE as an additional tool.
+2. Recreate ADTECH_AGENT with CALCULATE_CAMPAIGN_HEALTH_SCORE as an additional tool alongside the existing semantic view and search service.
 
 3. Test with: "Calculate the health score for a campaign with 1.5% CTR, 3.2% CVR, 2.8x ROAS, and 95% budget pacing"
 
