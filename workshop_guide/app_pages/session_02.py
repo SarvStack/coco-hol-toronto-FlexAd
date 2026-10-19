@@ -6,7 +6,7 @@ render_session_header(2, "Cortex Analyst & Semantic Views", "10:00 AM – 11:00 
 render_technologies_used([
     {"name": "Cortex Analyst", "description": "Snowflake's text-to-SQL engine that converts natural language questions into SQL queries using a semantic view to understand your data's business meaning.", "icon": "chat"},
     {"name": "Semantic View", "description": "A first-class Snowflake object (CREATE SEMANTIC VIEW) that describes your data in business terms: tables, relationships, facts, dimensions, metrics, and synonyms.", "icon": "description"},
-    {"name": "AI_SQL_GENERATION", "description": "Custom instructions embedded in the semantic view that guide how Cortex Analyst generates SQL — providing domain context and disambiguation hints.", "icon": "auto_fix_high"},
+    {"name": "Custom Instructions", "description": "Natural-language directives embedded in the semantic view (module_custom_instructions.sql_generation) that guide how Cortex Analyst generates SQL — providing domain context and disambiguation hints.", "icon": "auto_fix_high"},
 ])
 
 
@@ -48,7 +48,7 @@ ROAS = SUM(REVENUE)/NULLIF(SUM(SPEND),0),
 WIN_RATE = SUM(BIDS_WON)/NULLIF(SUM(BID_REQUESTS),0);
 plus SUM totals for each fact.
 
-Add an AI_SQL_GENERATION clause with: "This is an AdTech/programmatic advertising platform. Key domain concepts: CTR = click-through rate (clicks/impressions), CVR = conversion rate (conversions/clicks), CPM = cost per mille (spend/impressions*1000), CPC = cost per click (spend/clicks), ROAS = return on ad spend (revenue/spend), Win Rate = bids won / bid requests. Campaign objectives include awareness, consideration, conversion, and retargeting. Channels include display, video, mobile, CTV, native, social, audio, and DOOH."
+Add a custom_instructions clause (module_custom_instructions > sql_generation) with: "This is an AdTech/programmatic advertising platform. Key domain concepts: CTR = click-through rate (clicks/impressions), CVR = conversion rate (conversions/clicks), CPM = cost per mille (spend/impressions*1000), CPC = cost per click (spend/clicks), ROAS = return on ad spend (revenue/spend), Win Rate = bids won / bid requests. Campaign objectives include awareness, consideration, conversion, and retargeting. Channels include display, video, mobile, CTV, native, social, audio, and DOOH."
 
 Execute the DDL, run DESCRIBE SEMANTIC VIEW, and run one SEMANTIC_VIEW() test query (spend, CTR, ROAS by CHANNEL_NAME) to confirm."""
 
@@ -62,7 +62,7 @@ The semantic view maps AdTech business terms to SQL:
 - **Facts** are numeric columns used in aggregations (impressions, spend, revenue)
 - **Dimensions** are categorical columns used for grouping and filtering (channel, industry, objective)
 - **Metrics** are pre-defined calculations (CTR, CPM, ROAS) so analysts can ask for them by name
-- **AI instructions** teach the model domain-specific terminology and conventions
+- **Custom instructions** (module_custom_instructions.sql_generation) teach the model domain-specific terminology and conventions
 """)
 
 
@@ -114,7 +114,7 @@ Demonstrates iterative semantic view development — adding calculated metrics.
 render_key_concepts([
     {"term": "Cortex Analyst", "definition": "Snowflake's text-to-SQL engine. Converts natural language to SQL using a semantic view for context."},
     {"term": "Semantic View", "definition": "A first-class Snowflake object mapping tables to business concepts. Contains relationships, facts, dimensions, metrics, synonyms, and AI instructions."},
-    {"term": "AI_SQL_GENERATION", "definition": "Custom instructions guiding SQL generation. Essential for domain-specific terminology."},
+    {"term": "Custom Instructions", "definition": "Natural-language directives (module_custom_instructions.sql_generation) that guide Cortex Analyst's SQL generation. Essential for domain-specific terminology and business logic."},
 ])
 
 render_what_you_built([
