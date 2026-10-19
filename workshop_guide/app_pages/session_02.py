@@ -10,29 +10,47 @@ render_technologies_used([
 ])
 
 
-PROMPT_2_1 = """/semantic_studio In ADTECH_AI.OPS, create a semantic view called ADTECH_OPERATIONS_VIEW for use with Cortex Analyst. It should cover these tables: ADVERTISERS, CAMPAIGNS, AD_CREATIVES, CHANNELS, AUDIENCE_SEGMENTS, DAILY_PERFORMANCE, BID_ACTIVITY.
+PROMPT_2_1 = """In ADTECH_AI.OPS, create a semantic view ADTECH_OPERATIONS_VIEW for Cortex Analyst using native CREATE OR REPLACE SEMANTIC VIEW DDL (do not use YAML / SYSTEM$CREATE_SEMANTIC_VIEW_FROM_YAML).
 
-Include:
-- Relationships between the tables following these rules:
-  - Do NOT specify join_type — omit it entirely (the proto enum doesn't accept string values like many_to_one)
-  - Convention: left_table = fact/many side, right_table = dimension/one side (put the table with many rows as left_table)
-  - Define primary_key.columns on dimension tables (ADVERTISERS, CHANNELS, AUDIENCE_SEGMENTS) so the engine knows the "one" side
-  - Use this template for each relationship:
-    relationships:
-      - name: <descriptive_name>
-        left_table: <FACT_TABLE>
-        right_table: <DIMENSION_TABLE>
-        relationship_columns:
-          - left_column: <FK_COLUMN>
-            right_column: <PK_COLUMN>
-  - Relationships needed: CAMPAIGNS → ADVERTISERS (advertiser_id), DAILY_PERFORMANCE → CAMPAIGNS (campaign_id), DAILY_PERFORMANCE → CHANNELS (channel_id), BID_ACTIVITY → CAMPAIGNS (campaign_id), AD_CREATIVES → CAMPAIGNS (campaign_id)
-- Facts for key numeric columns: impressions, clicks, conversions, spend, revenue, bid_requests, bids_won, avg_bid_price, avg_win_price, daily_budget, estimated_reach
-- Dimensions for categorical columns: advertiser name, industry, tier, country, campaign name, channel, objective, status, creative format, segment name, segment type
-- Add useful SYNONYMS (e.g. spend → "ad spend", "cost", "budget used"; CTR → "click-through rate"; CVR → "conversion rate"; CPM → "cost per mille", "cost per thousand"; CPC → "cost per click"; ROAS → "return on ad spend")
-- Metrics: CTR (clicks/impressions), CVR (conversions/clicks), CPM (spend/impressions*1000), CPC (spend/clicks), ROAS (revenue/spend), Win Rate (bids_won/bid_requests)
-- An AI_SQL_GENERATION instruction with domain context: This is an AdTech/programmatic advertising platform. Key domain concepts: CTR = click-through rate (clicks/impressions), CVR = conversion rate (conversions/clicks), CPM = cost per mille (spend/impressions*1000), CPC = cost per click (spend/clicks), ROAS = return on ad spend (revenue/spend), Win Rate = bids won / bid requests. Campaign objectives include awareness, consideration, conversion, and retargeting. Channels include display, video, mobile, CTV, native, social, audio, and DOOH.
+Tables: ADVERTISERS, CAMPAIGNS, AD_CREATIVES, CHANNELS, AUDIENCE_SEGMENTS, DAILY_PERFORMANCE, BID_ACTIVITY.
 
-Execute the SQL and confirm with DESCRIBE SEMANTIC VIEW."""
+Inspect INFORMATION_SCHEMA.COLUMNS first and use the actual column names.
+
+Primary keys: ADVERTISERS(ADVERTISER_ID), CAMPAIGNS(CAMPAIGN_ID), AD_CREATIVES(CREATIVE_ID), CHANNELS(CHANNEL_ID), AUDIENCE_SEGMENTS(SEGMENT_ID).
+
+Relationships (fact/many side on the left, syntax: <name> AS <MANY_TABLE>(<FK>) REFERENCES <ONE_TABLE>):
+- CAMPAIGNS(ADVERTISER_ID) -> ADVERTISERS
+- DAILY_PERFORMANCE(CAMPAIGN_ID) -> CAMPAIGNS
+- DAILY_PERFORMANCE(CHANNEL_ID) -> CHANNELS
+- BID_ACTIVITY(CAMPAIGN_ID) -> CAMPAIGNS
+- AD_CREATIVES(CAMPAIGN_ID) -> CAMPAIGNS
+
+AUDIENCE_SEGMENTS has no join key; include it as a standalone table.
+
+Facts: IMPRESSIONS, CLICKS, CONVERSIONS, SPEND, REVENUE, BID_REQUESTS, BIDS_WON, AVG_BID_PRICE, AVG_WIN_PRICE, DAILY_BUDGET, ESTIMATED_REACH.
+
+Dimensions (rename generic columns to unique names):
+ADVERTISERS.NAME->ADVERTISER_NAME, INDUSTRY, TIER, COUNTRY;
+CAMPAIGNS.NAME->CAMPAIGN_NAME, CAMPAIGNS.CHANNEL->CAMPAIGN_CHANNEL, OBJECTIVE, CAMPAIGNS.STATUS->CAMPAIGN_STATUS;
+AD_CREATIVES.FORMAT->CREATIVE_FORMAT;
+CHANNELS.NAME->CHANNEL_NAME;
+AUDIENCE_SEGMENTS.NAME->SEGMENT_NAME, SEGMENT_TYPE;
+plus all date columns.
+
+Synonyms (WITH SYNONYMS = (...)): spend -> 'ad spend','cost','budget used'; CTR -> 'click-through rate'; CVR -> 'conversion rate'; CPM -> 'cost per mille','cost per thousand'; CPC -> 'cost per click'; ROAS -> 'return on ad spend'.
+
+Metrics (use NULLIF to avoid divide-by-zero):
+CTR = SUM(CLICKS)/NULLIF(SUM(IMPRESSIONS),0),
+CVR = SUM(CONVERSIONS)/NULLIF(SUM(CLICKS),0),
+CPM = SUM(SPEND)/NULLIF(SUM(IMPRESSIONS),0)*1000,
+CPC = SUM(SPEND)/NULLIF(SUM(CLICKS),0),
+ROAS = SUM(REVENUE)/NULLIF(SUM(SPEND),0),
+WIN_RATE = SUM(BIDS_WON)/NULLIF(SUM(BID_REQUESTS),0);
+plus SUM totals for each fact.
+
+Add an AI_SQL_GENERATION clause with: "This is an AdTech/programmatic advertising platform. Key domain concepts: CTR = click-through rate (clicks/impressions), CVR = conversion rate (conversions/clicks), CPM = cost per mille (spend/impressions*1000), CPC = cost per click (spend/clicks), ROAS = return on ad spend (revenue/spend), Win Rate = bids won / bid requests. Campaign objectives include awareness, consideration, conversion, and retargeting. Channels include display, video, mobile, CTV, native, social, audio, and DOOH."
+
+Execute the DDL, run DESCRIBE SEMANTIC VIEW, and run one SEMANTIC_VIEW() test query (spend, CTR, ROAS by CHANNEL_NAME) to confirm."""
 
 render_prompt("Prompt 2.1", "Create the Semantic View", PROMPT_2_1)
 
