@@ -31,13 +31,13 @@ col1.markdown("**12:30 PM – 1:30 PM**")
 col2.markdown(":orange-badge[LUNCH]")
 
 st.space("small")
-st.markdown("##### Afternoon — Hands-on Practice on StackAdapt Instance")
+st.markdown("##### Afternoon — Hands-on Practice on Snowflake Instance")
 
 with st.container(border=True):
     st.markdown("""
-**1:30 PM – 4:30 PM** — Apply what you learned in the morning lab to the **StackAdapt Snowflake instance**.
+**1:30 PM – 4:30 PM** — Apply what you learned in the morning lab to your **Snowflake instance**.
 
-Work at your own pace with Cortex Code on real StackAdapt data and use cases. The Snowflake team is available for guidance and questions throughout the afternoon.
+Work at your own pace with Cortex Code on real data and use cases. The Snowflake team is available for guidance and questions throughout the afternoon.
 """)
 
 st.space("medium")
